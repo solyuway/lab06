@@ -1,0 +1,46 @@
+# Сборка
+_build/
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# Сгенерированные пакеты
+*.tar.gz
+*.deb
+*.rpm
+*.dmg
+*.msi
+*.zip
+
+# Артефакты
+artifacts/
+*.log
+
+# Покрытие кода (если будет)
+*.gcda
+*.gcno
+*.gcov
+coverage.info
+coverage_report/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Временные файлы
+*.o
+*.so
+*.a
+*.exe
+*.dll
+*.dylib
+
+# OS
+Thumbs.db
