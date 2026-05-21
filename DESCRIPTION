@@ -1,0 +1,2 @@
+A static C++ library for printing text to streams and files.
+This library provides simple functions to output strings to various output streams.

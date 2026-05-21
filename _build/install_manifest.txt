@@ -1,0 +1,2 @@
+/home/alex/solyuway/workspace/tasks/lab06/_build/_CPack_Packages/Linux/TGZ/print-0.1.0.0-Linux/lib/libprint.a
+/home/alex/solyuway/workspace/tasks/lab06/_build/_CPack_Packages/Linux/TGZ/print-0.1.0.0-Linux/include/print.hpp
