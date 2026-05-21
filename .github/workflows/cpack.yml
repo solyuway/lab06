@@ -19,17 +19,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake g++
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ rpm
       - name: Configure and build
         run: |
           mkdir -p build && cd build
           cmake .. -DCMAKE_INSTALL_PREFIX=_install
           cmake --build .
-      - name: Create packages
-        run: |
-          cd build
-          cpack -G TGZ
-          cpack -G DEB
+      - name: Create TGZ package
+        run: cd build && cpack -G TGZ
+      - name: Create DEB package
+        run: cd build && cpack -G DEB
+      - name: Create RPM package
+        run: cd build && cpack -G RPM || echo "RPM creation failed"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -37,6 +40,7 @@ jobs:
           path: |
             build/*.tar.gz
             build/*.deb
+            build/*.rpm
 
   macos:
     runs-on: macos-latest
@@ -49,15 +53,17 @@ jobs:
           mkdir -p build && cd build
           cmake .. -DCMAKE_INSTALL_PREFIX=_install
           cmake --build .
-      - name: Create packages
-        run: |
-          cd build
-          cpack -G TGZ
+      - name: Create TGZ package
+        run: cd build && cpack -G TGZ
+      - name: Create DMG package
+        run: cd build && cpack -G DragNDrop || echo "DMG creation failed"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-packages
-          path: build/*.tar.gz
+          path: |
+            build/*.tar.gz
+            build/*.dmg
 
   windows:
     runs-on: windows-latest
@@ -72,38 +78,54 @@ jobs:
         run: |
           cd build
           cmake --build . --config Release
-      - name: Create packages
+      - name: Create TGZ package
+        run: |
+          cd build
+          cpack -G TGZ
+      - name: Create ZIP package
         run: |
           cd build
           cpack -G ZIP
-          cpack -G TGZ
+      - name: Create MSI package
+        run: |
+          cd build
+          cpack -G WIX || echo "MSI creation failed"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-packages
           path: |
-            build/*.zip
             build/*.tar.gz
+            build/*.zip
+            build/*.msi
 
   release:
     needs: [linux, macos, windows]
     runs-on: ubuntu-latest
-    if: always() && !cancelled()
+    if: success()
     steps:
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+      - name: List all artifacts
+        run: find artifacts -type f -name "*.tar.gz" -o -name "*.deb" -o -name "*.rpm" -o -name "*.dmg" -o -name "*.zip" -o -name "*.msi"
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ github.ref_name }}
           body: |
-            Release ${{ github.ref_name }}
-            Packages: Linux (TGZ, DEB), macOS (TGZ), Windows (ZIP, TGZ)
+            ## Release ${{ github.ref_name }}
+            
+            ### 📦 Packages
+            - **Linux**: TGZ, DEB, RPM
+            - **macOS**: TGZ, DMG
+            - **Windows**: TGZ, ZIP, MSI
           files: |
             artifacts/**/*.tar.gz
             artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.dmg
             artifacts/**/*.zip
+            artifacts/**/*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
