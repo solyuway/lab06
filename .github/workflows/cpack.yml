@@ -69,8 +69,6 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install WiX Toolset
-        run: choco install wixtoolset -y
       - name: Configure
         run: |
           mkdir build
@@ -88,11 +86,6 @@ jobs:
         run: |
           cd build
           cpack -G ZIP
-      - name: Create MSI package (WiX)
-        run: |
-          cd build
-          cpack -G WIX || echo "MSI creation failed"
-        continue-on-error: true
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -100,8 +93,6 @@ jobs:
           path: |
             build/*.tar.gz
             build/*.zip
-            build/*.msi
-        continue-on-error: true
 
   release:
     needs: [linux, macos, windows]
@@ -117,13 +108,12 @@ jobs:
           name: ${{ github.ref_name }}
           body: |
             Release ${{ github.ref_name }}
-            Packages: Linux (TGZ, DEB, RPM), macOS (TGZ, DMG), Windows (TGZ, ZIP, MSI)
+            Packages: Linux (TGZ, DEB, RPM), macOS (TGZ, DMG), Windows (TGZ, ZIP)
           files: |
             artifacts/**/*.tar.gz
             artifacts/**/*.deb
             artifacts/**/*.rpm
             artifacts/**/*.dmg
             artifacts/**/*.zip
-            artifacts/**/*.msi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -8,7 +8,7 @@
 |----------|---------|
 | Linux | TGZ, DEB, RPM |
 | macOS | TGZ, DMG |
-| Windows | TGZ, ZIP, MSI |
+| Windows | TGZ, ZIP |
 
 ## 🔧 Local build
 
