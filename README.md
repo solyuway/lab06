@@ -1,20 +1,16 @@
-# Lab06 - CPack Packaging with GitHub Actions
+# Lab06 - CPack Packaging
 
-## 🚀 Build Status
-
-[![CPack Packaging](https://github.com/solyuway/lab06/actions/workflows/cpack.yml/badge.svg)](https://github.com/solyuway/lab06/actions/workflows/cpack.yml)
+[![CPack Packaging](https://github.com/solyuway/lab06/actions/workflows/cpack.yml/badge.svg)](https://github.com/solyuway/lab06/actions)
 
 ## 📦 Packages
 
-При создании тега `v*` автоматически собираются пакеты:
-
-| Платформа | Форматы |
-|-----------|---------|
+| Platform | Formats |
+|----------|---------|
 | Linux | DEB, RPM, TGZ |
 | macOS | DMG, TGZ |
 | Windows | MSI, ZIP, TGZ |
 
-## 🔧 Local build
+## 🔧 Build
 
 ```bash
 mkdir build && cd build
