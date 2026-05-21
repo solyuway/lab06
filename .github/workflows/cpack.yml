@@ -6,6 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 env:
   GITHUB_USERNAME: ${{ github.repository_owner }}
   GITHUB_EMAIL: "solyuway@example.com"
@@ -16,18 +19,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y cmake g++ rpm
+        run: sudo apt-get update && sudo apt-get install -y cmake g++
       - name: Configure and build
         run: |
           mkdir -p build && cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=_install -DGITHUB_EMAIL="${{ env.GITHUB_EMAIL }}"
+          cmake .. -DCMAKE_INSTALL_PREFIX=_install
           cmake --build .
       - name: Create packages
         run: |
           cd build
           cpack -G TGZ
           cpack -G DEB
-          cpack -G RPM || echo "RPM skipped"
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -35,7 +37,6 @@ jobs:
           path: |
             build/*.tar.gz
             build/*.deb
-            build/*.rpm
 
   macos:
     runs-on: macos-latest
@@ -46,20 +47,17 @@ jobs:
       - name: Configure and build
         run: |
           mkdir -p build && cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=_install -DGITHUB_EMAIL="${{ env.GITHUB_EMAIL }}"
+          cmake .. -DCMAKE_INSTALL_PREFIX=_install
           cmake --build .
       - name: Create packages
         run: |
           cd build
-          cpack -G DragNDrop || echo "DMG skipped"
           cpack -G TGZ
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-packages
-          path: |
-            build/*.dmg
-            build/*.tar.gz
+          path: build/*.tar.gz
 
   windows:
     runs-on: windows-latest
@@ -69,7 +67,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 -DGITHUB_EMAIL="${{ env.GITHUB_EMAIL }}"
+          cmake .. -G "Visual Studio 17 2022" -A x64
       - name: Build
         run: |
           cd build
@@ -77,7 +75,6 @@ jobs:
       - name: Create packages
         run: |
           cd build
-          cpack -G WIX
           cpack -G ZIP
           cpack -G TGZ
       - name: Upload artifacts
@@ -85,16 +82,13 @@ jobs:
         with:
           name: windows-packages
           path: |
-            build/*.msi
             build/*.zip
             build/*.tar.gz
 
   release:
     needs: [linux, macos, windows]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    permissions:
-      contents: write
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -105,14 +99,10 @@ jobs:
           name: ${{ github.ref_name }}
           body: |
             Release ${{ github.ref_name }}
-            
-            Packages: Linux (DEB, RPM, TGZ), macOS (DMG, TGZ), Windows (MSI, ZIP, TGZ)
+            Packages: Linux (TGZ, DEB), macOS (TGZ), Windows (ZIP, TGZ)
           files: |
             artifacts/**/*.tar.gz
             artifacts/**/*.deb
-            artifacts/**/*.rpm
-            artifacts/**/*.dmg
-            artifacts/**/*.msi
             artifacts/**/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
