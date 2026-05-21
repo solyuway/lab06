@@ -1,0 +1,126 @@
+name: CPack Packaging
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ rpm
+      
+      - name: Configure and build
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_INSTALL_PREFIX=_install
+          cmake --build .
+      
+      - name: Create packages
+        run: |
+          cd build
+          cpack -G TGZ
+          cpack -G DEB
+          cpack -G RPM
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: build/*.tar.gz build/*.deb build/*.rpm
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: brew install cmake
+      
+      - name: Configure and build
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_INSTALL_PREFIX=_install
+          cmake --build .
+      
+      - name: Create DMG package
+        run: |
+          cd build
+          cpack -G DragNDrop
+          cpack -G TGZ
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-packages
+          path: build/*.dmg build/*.tar.gz
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Visual Studio 17 2022" -A x64
+      
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release
+      
+      - name: Create packages
+        run: |
+          cd build
+          cpack -G WIX
+          cpack -G ZIP
+          cpack -G TGZ
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-packages
+          path: build/*.msi build/*.zip build/*.tar.gz
+
+  release:
+    needs: [linux, macos, windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: ${{ github.ref_name }}
+          body: |
+            ## Release ${{ github.ref_name }}
+            
+            ### 📦 Packages:
+            - **Linux**: DEB, RPM, TGZ
+            - **macOS**: DMG, TGZ
+            - **Windows**: MSI, ZIP, TGZ
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/**/*.deb
+            artifacts/**/*.rpm
+            artifacts/**/*.dmg
+            artifacts/**/*.msi
+            artifacts/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
