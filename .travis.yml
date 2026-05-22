@@ -1,0 +1,35 @@
+language: cpp
+dist: focal
+
+jobs:
+  include:
+    # Linux: DEB пакет
+    - os: linux
+      addons:
+        apt:
+          packages:
+            - rpm
+      script:
+        - mkdir build && cd build
+        - cmake .. -DCMAKE_INSTALL_PREFIX=_install
+        - cmake --build .
+        - cpack -G DEB
+        - cpack -G RPM
+        - cpack -G TGZ
+    
+    # macOS: DMG пакет
+    - os: osx
+      script:
+        - mkdir build && cd build
+        - cmake .. -DCMAKE_INSTALL_PREFIX=_install
+        - cmake --build .
+        - cpack -G DragNDrop
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file_glob: true
+  file: build/*.{deb,rpm,tar.gz,dmg}
+  skip_cleanup: true
+  on:
+    tags: true

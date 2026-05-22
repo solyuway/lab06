@@ -1,0 +1,29 @@
+version: 1.0.{build}
+image: Visual Studio 2019
+platform: x64
+configuration: Release
+
+build_script:
+  - mkdir build
+  - cd build
+  - cmake .. -G "Visual Studio 16 2019"
+  - cmake --build . --config Release
+
+after_build:
+  - cd build
+  - cpack -G WIX
+  - cpack -G ZIP
+
+artifacts:
+  - path: build\*.msi
+    name: msi_installer
+  - path: build\*.zip
+    name: zip_archive
+
+deploy:
+  provider: releases
+  api_key:
+    secure: YOUR_ENCRYPTED_TOKEN
+  artifact: /.*\.(msi|zip)/
+  on:
+    APPVEYOR_REPO_TAG: true
